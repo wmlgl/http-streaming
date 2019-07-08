@@ -1,5 +1,6 @@
 const generate = require('videojs-generate-rollup-config');
 const worker = require('@gkatsev/rollup-plugin-bundle-worker');
+const createTestData = require('./create-test-data.js');
 
 // see https://github.com/videojs/videojs-generate-rollup-config
 // for options
@@ -25,6 +26,7 @@ const options = {
     defaults.module.splice(2, 0, 'worker');
     defaults.browser.splice(2, 0, 'worker');
     defaults.test.splice(3, 0, 'worker');
+    defaults.test.splice(0, 0, 'createTestData');
 
     // istanbul is only in the list for regular builds and not watch
     if (defaults.test.indexOf('istanbul') !== -1) {
@@ -35,7 +37,8 @@ const options = {
   },
   primedPlugins(defaults) {
     return Object.assign(defaults, {
-      worker: worker()
+      worker: worker(),
+      createTestData: createTestData()
     });
   },
   babel(defaults) {
@@ -48,8 +51,6 @@ const options = {
   }
 };
 const config = generate(options);
-
-// Add additonal builds/customization here!
 
 // export the builds to rollup
 export default [

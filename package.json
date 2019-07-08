@@ -16,8 +16,6 @@
     "build:js": "rollup -c scripts/rollup.config.js",
     "clean": "shx rm -rf ./dist ./test/dist",
     "postclean": "shx mkdir -p ./dist ./test/dist",
-    "build:test-manifests": "node ./scripts/create-test-manifests.js",
-    "build:test-segments": "node ./scripts/create-test-segments.js",
     "docs": "npm-run-all docs:*",
     "docs:api": "jsdoc src -g plugins/markdown -r -d docs/api",
     "docs:toc": "doctoc --notitle README.md",
@@ -33,8 +31,6 @@
     "preversion": "npm test",
     "version": "is-prerelease || npm run update-changelog && git add CHANGELOG.md",
     "watch": "npm-run-all -p watch:*",
-    "watch:test-manifests": "npm run build:test-manifests -- --watch",
-    "watch:test-segments": "npm run build:test-segments -- --watch",
     "watch:js": "npm run build:js -- -w",
     "prepublishOnly": "npm-run-all build test:verify"
   },
