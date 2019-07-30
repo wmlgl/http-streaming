@@ -468,7 +468,8 @@ export default class SyncController extends videojs.EventTarget {
       start: segmentStartTime,
       end: segmentEndTime,
       containsVideo: timeInfo.video && timeInfo.video.length === 2,
-      containsAudio: timeInfo.audio && timeInfo.audio.length === 2
+      containsAudio: timeInfo.audio && timeInfo.audio.length === 2,
+      hasKeyFrame: !! timeInfo.firstKeyFrame
     };
 
     return probedInfo;

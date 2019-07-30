@@ -1249,6 +1249,17 @@ export default class SegmentLoader extends videojs.EventTarget {
     const segment = segmentInfo.segment;
     const timingInfo = this.syncController_.probeSegmentInfo(segmentInfo);
 
+    if(!this.startingMedia_ && !timingInfo.hasKeyFrame) {
+      // 没有关键帧且为最开始加载的ts片，加载下一个， by wuml 2019-7-30 17:41:52
+      this.syncPoint_.segmentIndex++;
+      this.state = 'READY';
+      // 超出索引后结束流
+      // if(this.syncPoint_.segmentIndex >= this.playlist_.segments.length) {
+      //   this.endOfStream();
+      // }
+      return;
+    }
+
     // When we have our first timing info, determine what media types this loader is
     // dealing with. Although we're maintaining extra state, it helps to preserve the
     // separation of segment loader from the actual source buffers.
