@@ -1251,12 +1251,13 @@ export default class SegmentLoader extends videojs.EventTarget {
 
     if(!this.startingMedia_ && !timingInfo.hasKeyFrame) {
       // 没有关键帧且为最开始加载的ts片，加载下一个， by wuml 2019-7-30 17:41:52
+      // this.segmentRequestFinished_({
+      //   code: REQUEST_ERRORS.FAILURE,
+      //   message: "HLS ts file " +segmentInfo.uri+" not contains key frame.",
+      //   status: 200,
+      // }, segmentInfo);
       this.syncPoint_.segmentIndex++;
       this.state = 'READY';
-      // 超出索引后结束流
-      // if(this.syncPoint_.segmentIndex >= this.playlist_.segments.length) {
-      //   this.endOfStream();
-      // }
       return;
     }
 
