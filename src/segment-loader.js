@@ -13,6 +13,7 @@ import { TIME_FUDGE_FACTOR, timeUntilRebuffer as timeUntilRebuffer_ } from './ra
 import { minRebufferMaxBandwidthSelector } from './playlist-selectors';
 import { addCaptionData, createCaptionsTrackIfNotExists } from './util/text-tracks';
 import { CaptionParser } from 'mux.js/lib/mp4';
+import throttle from 'lodash/throttle'
 import logger from './util/logger';
 
 // in ms
@@ -226,6 +227,10 @@ export default class SegmentLoader extends videojs.EventTarget {
         }
       }
     });
+
+    // 修复无法访问的ts文件堆积造成大量请求导致播放异常卡死的问题 wuml 2019-7-31 17:43:01
+    this.__old_load = this.load;
+    this.load = throttle(()=>this.__old_load(), CHECK_BUFFER_DELAY);
   }
 
   /**

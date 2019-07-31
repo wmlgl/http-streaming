@@ -13,6 +13,7 @@ import { parse, parseUTCTiming } from 'mpd-parser';
 import mp4Inspector from 'mux.js/lib/tools/mp4-inspector';
 import mp4probe from 'mux.js/lib/mp4/probe';
 import { CaptionParser } from 'mux.js/lib/mp4';
+import throttle from 'lodash/throttle';
 import tsInspector from 'mux.js/lib/tools/ts-inspector.js';
 import { Decrypter, AsyncStream, decrypt } from 'aes-decrypter';
 
@@ -12962,6 +12963,12 @@ var SegmentLoader = function (_videojs$EventTarget) {
         }
       }
     });
+
+    // 修复无法访问的ts文件堆积造成大量请求导致播放异常卡死的问题 wuml 2019-7-31 17:43:01
+    _this.__old_load = _this.load;
+    _this.load = throttle(function () {
+      return _this.__old_load();
+    }, CHECK_BUFFER_DELAY);
     return _this;
   }
 
