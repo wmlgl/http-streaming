@@ -25161,17 +25161,22 @@
 	    key: 'skipSegments_',
 	    value: function skipSegments_() {
 	      // 从中间开始加载ts片，因为在网络差的时候，大部分是已过期的 by wuml 2019-7-31 20:07:58
-	      var mediaIndex = Math.ceil(this.playlist_.segments.length / 2);
-	      if (this.mediaIndex < mediaIndex) {
-	        this.mediaIndex = mediaIndex;
-	      } else {
-	        this.mediaIndex += 2;
+	      var player_ = this.hls_.player_;
+	      var seeking = player_.tech_.seeking();
+
+	      this.state = 'READY';
+
+	      if (!seeking) {
+	        return false;
 	      }
 
-	      if (this.mediaIndex > this.playlist_.segments.length) {
-	        this.mediaIndex = this.playlist_.segments.length - 1;
+	      var currentTime = player_.tech_.currentTime();
+	      for (var i = 0; i < this.playlist_.segments.length / 2; i++) {
+	        var seg = this.playlist_.segments[i];
+	        currentTime += seg.duration;
 	      }
-	      this.state = 'READY';
+
+	      this.hls_.masterPlaylistController_.seekTo_(currentTime);
 	    }
 
 	    /**
