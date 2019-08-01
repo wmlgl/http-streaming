@@ -25081,6 +25081,12 @@
 	          return;
 	        }
 
+	        if (error.code === REQUEST_ERRORS.FAILURE && !this.playlist_.endList) {
+	          // 如果是直播，加载出错，直接加载下一片 wuml 2019-7-31 19:44:51
+	          this.skipSegments_();
+	          return;
+	        }
+
 	        // if control-flow has arrived here, then the error is real
 	        // emit an error event to blacklist the current playlist
 	        this.mediaRequestsErrored += 1;
@@ -25147,6 +25153,28 @@
 	    }
 
 	    /**
+	     * 加载下一片ts， by wuml 2019-7-30 17:41:52
+	     * @private
+	     */
+
+	  }, {
+	    key: 'skipSegments_',
+	    value: function skipSegments_() {
+	      // 从中间开始加载ts片，因为在网络差的时候，大部分是已过期的 by wuml 2019-7-31 20:07:58
+	      var mediaIndex = Math.ceil(this.playlist_.segments.length / 2);
+	      if (this.mediaIndex < mediaIndex) {
+	        this.mediaIndex = mediaIndex;
+	      } else {
+	        this.mediaIndex += 2;
+	      }
+
+	      if (this.mediaIndex > this.playlist_.segments.length) {
+	        this.mediaIndex = this.playlist_.segments.length - 1;
+	      }
+	      this.state = 'READY';
+	    }
+
+	    /**
 	     * append a decrypted segement to the SourceBuffer through a SourceUpdater
 	     *
 	     * @private
@@ -25166,15 +25194,9 @@
 	      var segment = segmentInfo.segment;
 	      var timingInfo = this.syncController_.probeSegmentInfo(segmentInfo);
 
-	      if (!this.startingMedia_ && !timingInfo.hasKeyFrame) {
-	        // 没有关键帧且为最开始加载的ts片，加载下一个， by wuml 2019-7-30 17:41:52
-	        // this.segmentRequestFinished_({
-	        //   code: REQUEST_ERRORS.FAILURE,
-	        //   message: "HLS ts file " +segmentInfo.uri+" not contains key frame.",
-	        //   status: 200,
-	        // }, segmentInfo);
-	        this.syncPoint_.segmentIndex++;
-	        this.state = 'READY';
+	      if (!this.startingMedia_ && !timingInfo.hasKeyFrame && !this.playlist_.endList) {
+	        // 如果是直播，且没有关键帧且为最开始加载的ts片，加载下一个， by wuml 2019-7-30 17:41:52
+	        this.skipSegments_();
 	        return;
 	      }
 
@@ -30237,7 +30259,16 @@
 	      }
 
 	      // 42 = 24 fps // 250 is what Webkit uses // FF uses 15
-	      this.checkCurrentTimeTimeout_ = window_1.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+	      // this.checkCurrentTimeTimeout_ =
+	      //   window.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+
+	      // 这里的延时如果太短，在网速过低时，ts片过期后 (ts片404)会导致一个请求被无限cancel的错误
+	      // 所以延时设长一点 by wuml 2019-7-31 19:58:36
+	      if (this.media().endList) {
+	        this.checkCurrentTimeTimeout_ = window_1.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+	      } else {
+	        this.checkCurrentTimeTimeout_ = window_1.setTimeout(this.monitorCurrentTime_.bind(this), 2000);
+	      }
 	    }
 
 	    /**

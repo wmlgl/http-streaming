@@ -82,8 +82,18 @@ export default class PlaybackWatcher {
     }
 
     // 42 = 24 fps // 250 is what Webkit uses // FF uses 15
-    this.checkCurrentTimeTimeout_ =
-      window.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+    // this.checkCurrentTimeTimeout_ =
+    //   window.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+
+    // 这里的延时如果太短，在网速过低时，ts片过期后 (ts片404)会导致一个请求被无限cancel的错误
+    // 所以延时设长一点 by wuml 2019-7-31 19:58:36
+    if(this.media().endList) {
+        this.checkCurrentTimeTimeout_ =
+        window.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+    } else {
+         this.checkCurrentTimeTimeout_ =
+           window.setTimeout(this.monitorCurrentTime_.bind(this), 2000);
+    }
   }
 
   /**
