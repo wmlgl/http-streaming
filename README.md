@@ -868,3 +868,104 @@ npm run <command>
 [issue-stats-issues-icon]: http://issuestats.com/github/videojs/http-streaming/badge/issue
 [greenkeeper-icon]: https://badges.greenkeeper.io/videojs/http-streaming.svg
 [greenkeeper-link]: https://greenkeeper.io/
+
+
+
+#########################################################
+videojs:  补丁
+修复404问题：
+    function SegmentLoader(settings) {
+    --------
+    
+      }); // 修复无法访问的ts文件堆积造成大量请求导致播放异常卡死的问题 wuml 2019-7-31 17:43:01
+
+      _this.__old_load = _this.load;
+      _this.load = throttle_1(function () {
+        return _this.__old_load();
+      }, CHECK_BUFFER_DELAY);
+      return _this;
+    --------
+  function segmentRequestFinished_(error, simpleSegment) {
+  -------------
+          if (error.code === REQUEST_ERRORS.TIMEOUT) {
+            this.mediaRequestsTimedout += 1;
+            this.bandwidth = 1;
+            this.roundTrip = NaN;
+            this.trigger('bandwidthupdate');
+            return;
+          }
+
+          if (error.code === REQUEST_ERRORS.FAILURE && !this.playlist_.endList) {
+            // 如果是直播，加载出错，直接加载下一片 wuml 2019-7-31 19:44:51
+            this.skipSegments_();
+            return;
+  
+  -------------
+
+        this.handleSegment_();
+      }
+      /**
+       * 加载下一片ts， by wuml 2019-7-30 17:41:52
+       * @private
+       */
+
+    }, {
+      key: 'skipSegments_',
+      value: function skipSegments_() {
+        // 从中间开始加载ts片，因为在网络差的时候，大部分是已过期的 by wuml 2019-7-31 20:07:58
+        var player_ = this.hls_.player_;
+        var seeking = player_.tech_.seeking();
+        this.state = 'READY';
+
+        if (!seeking) {
+          return false;
+        }
+
+        var currentTime = player_.tech_.currentTime();
+
+        for (var i = 0; i < this.playlist_.segments.length / 2; i++) {
+          var seg = this.playlist_.segments[i];
+          currentTime += seg.duration;
+        }
+
+        this.hls_.masterPlaylistController_.seekTo_(currentTime);
+      }
+      /**
+      -----------
+value: function handleSegment_() {
+    ------------
+        var segmentInfo = this.pendingSegment_;
+        var segment = segmentInfo.segment;
+        var timingInfo = this.syncController_.probeSegmentInfo(segmentInfo);
+
+        if (!this.startingMedia_ && !timingInfo.hasKeyFrame && !this.playlist_.endList) {
+          // 如果是直播，且没有关键帧且为最开始加载的ts片，加载下一个， by wuml 2019-7-30 17:41:52
+          this.skipSegments_();
+          return;
+        } // When we have our first timing info, determine what media types this loader is
+      ------------
+  value: function probeTsSegment_(segmentInfo) {
+    ---------
+          containsVideo: timeInfo.video && timeInfo.video.length === 2,
+          containsAudio: timeInfo.audio && timeInfo.audio.length === 2,
+          hasKeyFrame: !!timeInfo.firstKeyFrame
+        };
+        return probedInfo;
+    ---------
+  value: function monitorCurrentTime_() {
+    -----------
+    } // 42 = 24 fps // 250 is what Webkit uses // FF uses 15
+        // this.checkCurrentTimeTimeout_ =
+        //   window.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+        // 这里的延时如果太短，在网速过低时，ts片过期后 (ts片404)会导致一个请求被无限cancel的错误
+        // 所以延时设长一点 by wuml 2019-7-31 19:58:36
+
+
+        if (this.media().endList) {
+          this.checkCurrentTimeTimeout_ = window$1.setTimeout(this.monitorCurrentTime_.bind(this), 250);
+        } else {
+          this.checkCurrentTimeTimeout_ = window$1.setTimeout(this.monitorCurrentTime_.bind(this), 2000);
+        }
+      }
+    -----------
+    
